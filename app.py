@@ -8,7 +8,7 @@ import pytz
 # Initialize Flask app
 app = Flask(__name__)
 # Enable CORS for requests from your GitHub Pages domain
-CORS(app, resources={r"/api/*": {"origins": "https://amitkcodes.github.io"}})
+CORS(app, resources={r"/api/*": {"origins": "https://amitkcodes.github.io/ntp-monitoring"}})
 
 # List of NTP servers
 ntp_servers = [
