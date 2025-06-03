@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NTP Servers Monitoring</title>
+    <!-- Include Chart.js for charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Basic CSS for styling -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f9;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .chart-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 20px 0;
+        }
+        .history-section {
+            margin-top: 20px;
+        }
+        select, button {
+            padding: 8px;
+            margin: 5px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>NTP Servers Monitoring Dashboard</h1>
+
+    <!-- Real-time Data Section -->
+    <h2>Real-time Data</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Server</th>
+                <th>Offset (ms)</th>
+                <th>Delay (ms)</th>
+                <th>Response Time (ms)</th>
+                <th>Root Dispersion (ms)</th>
+                <th>Root Delay (ms)</th>
+                <th>Precision (ms)</th>
+                <th>Status</th>
+                <th>Timestamp</th>
+            </tr>
+        </thead>
+        <tbody id="realtime-data"></tbody>
+    </table>
+
+    <!-- Charts Section -->
+    <h2>Visualizations</h2>
+    <div class="chart-container">
+        <canvas id="network-offset-chart"></canvas>
+    </div>
+    <div class="chart-container">
+        <canvas id="network-delay-chart"></canvas>
+    </div>
+
+    <!-- Historical Data Section -->
+    <div class="history-section">
+        <h2>Historical Data</h2>
+        <select id="server-select">
+            <option value="">Select a server</option>
+        </select>
+        <button id="view-history-btn">View History</button>
+        <table>
+            <thead>
+                <tr>
+                    <th>Offset (ms)</th>
+                    <th>Delay (ms)</th>
+                    <th>Response Time (ms)</th>
+                    <th>Root Dispersion (ms)</th>
+                    <th>Root Delay (ms)</th>
+                    <th>Precision (ms)</th>
+                    <th>Status</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody id="historical-data"></tbody>
+        </table>
+    </div>
+
+    <!-- JavaScript to fetch and render data -->
+    <script>
+        // Backend URL (Render deployment)
+        const backendUrl = "https://ntp-monitoring-backend.onrender.com";
+
+        // Fetch real-time data
+        async function fetchRealtimeData() {
+            try {
+                const response = await fetch(`${backendUrl}/api/realtime`);
+                const data = await response.json();
+
+                const tbody = document.getElementById("realtime-data");
+                tbody.innerHTML = ""; // Clear existing rows
+
+                data.forEach(item => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td>${item.server}</td>
+                        <td>${item.offset_ms}</td>
+                        <td>${item.delay_ms}</td>
+                        <td>${item.response_time_ms}</td>
+                        <td>${item.root_dispersion_ms}</td>
+                        <td>${item.root_delay_ms}</td>
+                        <td>${item.precision_ms}</td>
+                        <td>${item.status}</td>
+                        <td>${item.timestamp}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                // Render charts after updating the table
+                renderCharts(data);
+            } catch (error) {
+                console.error("Error fetching real-time data:", error);
+            }
+        }
+
+        // Render charts using Chart.js
+        async function renderCharts(data) {
+            // Network Offset Chart
+            const ctxOffset = document.getElementById("network-offset-chart").getContext("2d");
+            new Chart(ctxOffset, {
+                type: "bar",
+                data: {
+                    labels: data.map(item => item.server),
+                    datasets: [{
+                        label: "Network Offset (ms)",
+                        data: data.map(item => parseFloat(item.offset_ms)),
+                        backgroundColor: "#1E90FF",
+                        borderColor: "#104E8B",
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: "Offset (ms)" }
+                        },
+                        x: {
+                            title: { display: true, text: "NTP Server" },
+                            ticks: { autoSkip: false, maxRotation: 45, minRotation: 45 }
+                        }
+                    }
+                }
+            });
+
+            // Network Delay Chart
+            const ctxDelay = document.getElementById("network-delay-chart").getContext("2d");
+            new Chart(ctxDelay, {
+                type: "bar",
+                data: {
+                    labels: data.map(item => item.server),
+                    datasets: [{
+                        label: "Network Delay (ms)",
+                        data: data.map(item => parseFloat(item.delay_ms)),
+                        backgroundColor: "#32CD32",
+                        borderColor: "#228B22",
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: "Delay (ms)" }
+                        },
+                        x: {
+                            title: { display: true, text: "NTP Server" },
+                            ticks: { autoSkip: false, maxRotation: 45, minRotation: 45 }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Fetch historical data
+        async function fetchHistoricalData() {
+            const serverSelect = document.getElementById("server-select");
+            const server = serverSelect.value;
+            if (!server) {
+                alert("Please select a server.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${backendUrl}/api/history?server=${server}`);
+                const data = await response.json();
+
+                const tbody = document.getElementById("historical-data");
+                tbody.innerHTML = ""; // Clear existing rows
+
+                data.forEach(item => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td>${item.offset_ms}</td>
+                        <td>${item.delay_ms}</td>
+                        <td>${item.response_time_ms}</td>
+                        <td>${item.root_dispersion_ms}</td>
+                        <td>${item.root_delay_ms}</td>
+                        <td>${item.precision_ms}</td>
+                        <td>${item.status}</td>
+                        <td>${item.timestamp}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error("Error fetching historical data:", error);
+            }
+        }
+
+        // Populate the server dropdown
+        async function populateServerDropdown() {
+            try {
+                const response = await fetch(`${backendUrl}/api/realtime`);
+                const data = await response.json();
+
+                const serverSelect = document.getElementById("server-select");
+                data.forEach(item => {
+                    const option = document.createElement("option");
+                    option.value = item.server;
+                    option.textContent = item.server;
+                    serverSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Error populating server dropdown:", error);
+            }
+        }
+
+        // Load data on page load
+        window.onload = () => {
+            fetchRealtimeData();
+            populateServerDropdown();
+            // Refresh real-time data every 30 seconds
+            setInterval(fetchRealtimeData, 30000);
+        };
+
+        // Add event listener for the "View History" button
+        document.getElementById("view-history-btn").addEventListener("click", fetchHistoricalData);
+    </script>
+</body>
+</html>
