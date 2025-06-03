@@ -10,24 +10,15 @@ app = Flask(__name__)
 # Enable CORS for requests from your GitHub Pages domain
 CORS(app, resources={r"/api/*": {"origins": "https://amitkcodes.github.io/ntp-monitoring"}})
 
-# List of NTP servers
+# List of NTP servers (updated with reliable servers)
 ntp_servers = [
-    "157.20.66.8",
-    "157.20.66.8",
-    "157.20.67.8",
-    "14.139.60.103",
-    "14.139.60.106",
-    "14.139.60.107",
-    "time.nplindia.in",
-    "time.nplindia.org",
-    "samay1.nic.in",
-    "samay2.nic.in",
-    "time.nist.gov",
     "pool.ntp.org",
-    "time.windows.com",
     "time.google.com",
+    "time.windows.com",
+    "time.nist.gov",
     "asia.pool.ntp.org",
-    "uk.pool.ntp.org"
+    "europe.pool.ntp.org",
+    "north-america.pool.ntp.org"
 ]
 
 # Function to query an NTP server
@@ -45,7 +36,7 @@ def query_ntp_server(server):
             "delay_ms": f"{response.delay * 1000:.3f}",
             "root_delay_ms": f"{response.root_delay * 1000:.3f}",
             "root_dispersion_ms": f"{response.root_dispersion * 1000:.3f}",
-            "response_time_ms": f"{response.recv_time - response.sent_time:.3f}",
+            "response_time_ms": f"{(response.dest_time - response.orig_time) * 1000:.3f}",
             "precision_ms": f"{response.precision:.3f}",
             "timestamp": timestamp
         }
