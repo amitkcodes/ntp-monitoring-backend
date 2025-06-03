@@ -13,6 +13,7 @@ CORS(app, resources={r"/api/*": {"origins": "https://amitkcodes.github.io/ntp-mo
 # List of NTP servers
 ntp_servers = [
     "157.20.66.8",
+    "157.20.66.8",
     "157.20.67.8",
     "14.139.60.103",
     "14.139.60.106",
@@ -63,6 +64,11 @@ def query_ntp_server(server):
             "precision_ms": "0.000",
             "timestamp": timestamp
         }
+
+# Add a root route for health checks
+@app.route('/')
+def home():
+    return jsonify({"message": "Welcome to the NTP Monitoring Backend! Use /api/realtime or /api/history to access data."}), 200
 
 # API endpoint for real-time data
 @app.route('/api/realtime', methods=['GET'])
