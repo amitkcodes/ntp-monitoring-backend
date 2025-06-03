@@ -36,6 +36,7 @@ def query_ntp_server(server):
         response = client.request(server)
         ist = pytz.timezone('Asia/Kolkata')
         timestamp = datetime.now(ist).isoformat()
+        
         return {
             "server": server,
             "status": "Online",
